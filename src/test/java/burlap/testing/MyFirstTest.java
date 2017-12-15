@@ -19,6 +19,8 @@ import burlap.statehashing.simple.SimpleHashableStateFactory;
 import burlap.mdp.singleagent.SADomain;
 import burlap.mdp.singleagent.environment.Environment;
 import burlap.mdp.singleagent.environment.SimulatedEnvironment;
+import burlap.mdp.singleagent.model.FactoredModel;
+import burlap.mdp.singleagent.model.SampleModel;
 import burlap.mdp.singleagent.oo.OOSADomain;
 
 import java.util.ArrayList;
@@ -30,8 +32,24 @@ public class MyFirstTest {
     	//define the problem
     	GridWorldDomain gwd = new GridWorldDomain(11, 11);
     	gwd.setMapToFourRooms();
-    	gwd.setTf(new GridWorldTerminalFunction(10, 10));
+//    	gwd.setTf(new GridWorldTerminalFunction(10, 10));
+    	
     	OOSADomain domain = gwd.generateDomain();
+    	
+    	PFFeatures featureGen = new PFFeatures(domain);
+    	LinearStateDifferentiableRF rf_gw = new LinearStateDifferentiableRF(featureGen, 5);
+    	rf_gw.setParameter(0,-1.9426407090130215);
+    	rf_gw.setParameter(1,-1.8498723543987161);
+    	rf_gw.setParameter(2,-1.7895505399361904);
+    	rf_gw.setParameter(3,7.23053156149437);
+    	rf_gw.setParameter(4,-1.2642202450553577);
+    	//[, , , , ]
+    	gwd.setRf(rf_gw);
+    	FactoredModel model_tmp = (FactoredModel)domain.getModel();
+    	model_tmp.setRf(rf_gw);
+    	domain.setModel(model_tmp);
+    	
+    	
     	GridLocation gridloc = new GridLocation(10,10,"loc0");
     	Environment env = new SimulatedEnvironment(domain, new GridWorldState(0, 0, gridloc));
 
@@ -41,24 +59,28 @@ public class MyFirstTest {
     	//run 100 learning episode and save the episode results
     	List<Episode> episodes = new ArrayList<Episode>();
     	for(int i = 0; i < 200; i++){
-    		episodes.add(agent.runLearningEpisode(env));
+    		episodes.add(agent.runLearningEpisode(env,500));
     		env.resetEnvironment();
     	}
     	
-    	List<Episode> goodEpisodes = new ArrayList<Episode>(episodes.subList(99, 200));
+//    	List<Episode> goodEpisodes = new ArrayList<Episode>(episodes.subList(99, 200));
+    	List<Episode> goodEpisodes = new ArrayList<Episode>();
+    	for(int i = 0; i < 20; i++){
+    		goodEpisodes.add(agent.runLearningEpisode(env,50));
+    		env.resetEnvironment();
+    	}
     	//visualize the completed learning episodes
-    	//new EpisodeSequenceVisualizer(GridWorldVisualizer.getVisualizer(gwd.getMap()), domain, episodes);
+    	new EpisodeSequenceVisualizer(GridWorldVisualizer.getVisualizer(gwd.getMap()), domain, goodEpisodes);
     	
-    	PFFeatures featureGen = new PFFeatures(domain);
     	LinearStateDifferentiableRF rf = new LinearStateDifferentiableRF(featureGen, 5);
     	SimpleHashableStateFactory hashingFactory = new SimpleHashableStateFactory();
     	MLIRLRequest request = new MLIRLRequest(domain, goodEpisodes, rf, hashingFactory);
     	
-    	MLIRL mlirl = new MLIRL(request, .00003, .01, 500);
+    	MLIRL mlirl = new MLIRL(request, .03, .001, 50);
     	    	
     	mlirl.performIRL();
     	
-    	DifferentiableRF rf_new = request.getRf();
+    	DifferentiableRF rf_new = mlirl.getRequest().getRf();
 //    	LinearStateDifferentiableRF rf_new = new LinearStateDifferentiableRF(featureGen, 5);
 //    	rf_new.setParameter(0, 0);
 //    	rf_new.setParameter(1,0);
@@ -70,7 +92,7 @@ public class MyFirstTest {
     	// test learned reward
     	GridWorldDomain gwd_learned = new GridWorldDomain(11, 11);
     	gwd_learned.setMapToFourRooms();
-    	gwd_learned.setTf(new GridWorldTerminalFunction(10, 10));
+//    	gwd_learned.setTf(new GridWorldTerminalFunction(10, 10));
     	gwd_learned.setRf(rf_new);
     	OOSADomain domain_learned = gwd_learned.generateDomain();
     	Environment env_learned = new SimulatedEnvironment(domain_learned, new GridWorldState(0, 0, gridloc));
@@ -81,7 +103,7 @@ public class MyFirstTest {
     	//run 100 learning episode and save the episode results
     	List<Episode> episodes_learned = new ArrayList<Episode>();
     	for(int i = 0; i < 200; i++){
-    		episodes_learned.add(agent_learned.runLearningEpisode(env_learned));
+    		episodes_learned.add(agent_learned.runLearningEpisode(env_learned,500));
     		env_learned.resetEnvironment();
     	}
     	
