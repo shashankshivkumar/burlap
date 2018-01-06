@@ -38,11 +38,11 @@ public class MyFirstTest {
     	
     	PFFeatures featureGen = new PFFeatures(domain);
     	LinearStateDifferentiableRF rf_gw = new LinearStateDifferentiableRF(featureGen, 5);
-    	rf_gw.setParameter(0,-1.9426407090130215);
-    	rf_gw.setParameter(1,-1.8498723543987161);
-    	rf_gw.setParameter(2,-1.7895505399361904);
-    	rf_gw.setParameter(3,7.23053156149437);
-    	rf_gw.setParameter(4,-1.2642202450553577);
+    	rf_gw.setParameter(0,0);
+    	rf_gw.setParameter(1,0);
+    	rf_gw.setParameter(2,0);
+    	rf_gw.setParameter(3,20);
+    	rf_gw.setParameter(4,0);
     	//[, , , , ]
     	gwd.setRf(rf_gw);
     	FactoredModel model_tmp = (FactoredModel)domain.getModel();
