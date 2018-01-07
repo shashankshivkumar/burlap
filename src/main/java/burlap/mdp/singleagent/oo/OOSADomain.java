@@ -20,6 +20,8 @@ public class OOSADomain extends SADomain implements OODomain {
 
 	protected Map<String, PropositionalFunction> propFunctionMap = new HashMap<String, PropositionalFunction>();
 
+	protected double[][] featureVector;
+	
 	@Override
 	public List<Class<?>> stateClasses() {
 		return new ArrayList<Class<?>>(stateClassesMap.values());
@@ -50,5 +52,20 @@ public class OOSADomain extends SADomain implements OODomain {
 	public OOSADomain addPropFunction(PropositionalFunction prop) {
 		this.propFunctionMap.put(prop.getName(), prop);
 		return this;
+	}
+	
+	public OOSADomain addFeatureVector(double[][] featureVector) {
+		this.featureVector = featureVector.clone();
+		return this;
+	}
+	
+	public double[][] getFeatures() {
+		double[][] copy = new double[featureVector.length][featureVector[0].length];
+		for(int i = 0; i < featureVector.length; i++) {
+			for(int j = 0; j < featureVector[0].length; j++) {
+				copy[i][j] = featureVector[i][j];
+			}
+		}
+		return copy;
 	}
 }
