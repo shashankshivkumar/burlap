@@ -44,7 +44,7 @@ public class MLIRL {
 	/**
 	 * The MLRIL request defining the IRL problem.
 	 */
-	protected MLIRLRequest request;
+	private MLIRLRequest request;
 
 	/**
 	 * The gradient ascent learning rate
@@ -78,7 +78,7 @@ public class MLIRL {
 	 */
 	public MLIRL(MLIRLRequest request, double learningRate, double maxLikelihoodChange, int maxSteps){
 
-		this.request = request;
+		this.setRequest(request);
 		this.learningRate = learningRate;
 		this.maxLikelihoodChange = maxLikelihoodChange;
 		this.maxSteps = maxSteps;
@@ -106,7 +106,7 @@ public class MLIRL {
 	 */
 	public void toggleDebugPrinting(boolean printDebug){
 		DPrint.toggleCode(this.debugCode, printDebug);
-		this.request.getPlanner().toggleDebugPrinting(printDebug);
+		this.getRequest().getPlanner().toggleDebugPrinting(printDebug);
 	}
 
 
@@ -133,13 +133,13 @@ public class MLIRL {
 	 */
 	public void performIRL(){
 
-		DifferentiableRF rf = this.request.getRf();
+		DifferentiableRF rf = this.getRequest().getRf();
 
 		//reset valueFunction
-		this.request.getPlanner().resetSolver();
-		this.request.getPlanner().setModel(new CustomRewardModel(request.getDomain().getModel(), rf));
+		this.getRequest().getPlanner().resetSolver();
+		this.getRequest().getPlanner().setModel(new CustomRewardModel(getRequest().getDomain().getModel(), rf));
 		double lastLikelihood = this.logLikelihood();
-		DPrint.cl(this.debugCode, "RF: " + this.request.getRf().toString());
+		DPrint.cl(this.debugCode, "RF: " + this.getRequest().getRf().toString());
 		DPrint.cl(this.debugCode, "Log likelihood: " + lastLikelihood);
 		
 
@@ -159,15 +159,15 @@ public class MLIRL {
 
 
 			//reset valueFunction
-			this.request.getPlanner().resetSolver();
-			this.request.getPlanner().setModel(new CustomRewardModel(request.getDomain().getModel(), rf));
+			this.getRequest().getPlanner().resetSolver();
+			this.getRequest().getPlanner().setModel(new CustomRewardModel(getRequest().getDomain().getModel(), rf));
 
 			double newLikelihood = this.logLikelihood();
 			double likelihoodChange = newLikelihood-lastLikelihood;
 			lastLikelihood = newLikelihood;
 
 
-			DPrint.cl(this.debugCode, "RF: " + this.request.getRf().toString());
+			DPrint.cl(this.debugCode, "RF: " + this.getRequest().getRf().toString());
 			DPrint.cl(this.debugCode, "Log likelihood: " + lastLikelihood + " (change: " + likelihoodChange + ")");
 
 			if(Math.abs(likelihoodChange) < this.maxLikelihoodChange){
@@ -180,7 +180,7 @@ public class MLIRL {
 
 
 		DPrint.cl(this.debugCode, "\nNum gradient ascent steps: " + i);
-		DPrint.cl(this.debugCode, "RF: " + this.request.getRf().toString());
+		DPrint.cl(this.debugCode, "RF: " + this.getRequest().getRf().toString());
 
 
 
@@ -193,8 +193,8 @@ public class MLIRL {
 	 */
 	public double logLikelihood(){
 
-		double [] weights = this.request.getEpisodeWeights();
-		List<Episode> exampleTrajectories = this.request.getExpertEpisodes();
+		double [] weights = this.getRequest().getEpisodeWeights();
+		List<Episode> exampleTrajectories = this.getRequest().getExpertEpisodes();
 
 		double sum = 0.;
 		for(int i = 0; i < exampleTrajectories.size(); i++){
@@ -214,9 +214,9 @@ public class MLIRL {
 	 */
 	public double logLikelihoodOfTrajectory(Episode ea, double weight){
 		double logLike = 0.;
-		Policy p = new BoltzmannQPolicy((QProvider)this.request.getPlanner(), 1./this.request.getBoltzmannBeta());
+		Policy p = new BoltzmannQPolicy((QProvider)this.getRequest().getPlanner(), 1./this.getRequest().getBoltzmannBeta());
 		for(int i = 0; i < ea.numTimeSteps()-1; i++){
-			this.request.getPlanner().planFromState(ea.state(i));
+			this.getRequest().getPlanner().planFromState(ea.state(i));
 			double actProb = p.actionProb(ea.state(i), ea.action(i));
 			logLike += Math.log(actProb);
 		}
@@ -235,14 +235,14 @@ public class MLIRL {
 	public FunctionGradient logLikelihoodGradient(){
 		HashedAggregator<Integer> gradientSum = new HashedAggregator<Integer>();
 
-		double [] weights = this.request.getEpisodeWeights();
-		List<Episode> exampleTrajectories = this.request.getExpertEpisodes();
+		double [] weights = this.getRequest().getEpisodeWeights();
+		List<Episode> exampleTrajectories = this.getRequest().getExpertEpisodes();
 
 		for(int i = 0; i < exampleTrajectories.size(); i++){
 			Episode ea = exampleTrajectories.get(i);
 			double weight = weights[i];
 			for(int t = 0; t < ea.numTimeSteps()-1; t++){
-				this.request.getPlanner().planFromState(ea.state(t));
+				this.getRequest().getPlanner().planFromState(ea.state(t));
 				FunctionGradient policyGrad = this.logPolicyGrad(ea.state(t), ea.action(t));
 				//weigh it by trajectory strength
 				for(FunctionGradient.PartialDerivative pd : policyGrad.getNonZeroPartialDerivatives()){
@@ -274,9 +274,9 @@ public class MLIRL {
 	 */
 	public FunctionGradient logPolicyGrad(State s, Action ga){
 
-		Policy p = new BoltzmannQPolicy((QProvider)this.request.getPlanner(), 1./this.request.getBoltzmannBeta());
+		Policy p = new BoltzmannQPolicy((QProvider)this.getRequest().getPlanner(), 1./this.getRequest().getBoltzmannBeta());
 		double invActProb = 1./p.actionProb(s, ga);
-		FunctionGradient gradient = BoltzmannPolicyGradient.computeBoltzmannPolicyGradient(s, ga, (DifferentiableQFunction)this.request.getPlanner(), this.request.getBoltzmannBeta());
+		FunctionGradient gradient = BoltzmannPolicyGradient.computeBoltzmannPolicyGradient(s, ga, (DifferentiableQFunction)this.getRequest().getPlanner(), this.getRequest().getBoltzmannBeta());
 
 		for(FunctionGradient.PartialDerivative pd : gradient.getNonZeroPartialDerivatives()){
 			double newVal = pd.value * invActProb;
@@ -299,6 +299,11 @@ public class MLIRL {
 		for(int i = 0; i < sumVector.length; i++){
 			sumVector[i] += deltaVector[i];
 		}
+	}
+
+
+	public MLIRLRequest getRequest() {
+		return request;
 	}
 
 

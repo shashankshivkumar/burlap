@@ -60,62 +60,62 @@ public class QLearning extends MDPSolver implements QProvider, LearningAgent, Pl
 	/**
 	 * The tabular mapping from states to Q-values
 	 */
-	protected Map<HashableState, QLearningStateNode> 				qFunction;
+	public /*protected*/ Map<HashableState, QLearningStateNode> 				qFunction;
 	
 	/**
 	 * The object that defines how Q-values are initialized.
 	 */
-	protected QFunction 											qInitFunction;
+	public /*protected*/ QFunction 											qInitFunction;
 	
 	/**
 	 * The learning rate function used.
 	 */
-	protected LearningRate											learningRate;
+	public /*protected*/ LearningRate											learningRate;
 	
 	/**
 	 * The learning policy to use. Typically these will be policies that link back to this object so that they change as the Q-value estimate change.
 	 */
-	protected Policy												learningPolicy;
+	public /*protected*/ Policy												learningPolicy;
 
 
 	/**
 	 * The maximum number of steps that will be taken in an episode before the agent terminates a learning episode
 	 */
-	protected int													maxEpisodeSize;
+	public /*protected*/ int													maxEpisodeSize;
 	
 	/**
 	 * A counter for counting the number of steps in an episode that have been taken thus far
 	 */
-	protected int													eStepCounter;
+	public /*protected*/ int													eStepCounter;
 	
 	/**
 	 * The maximum number of episodes to use for planning
 	 */
-	protected int													numEpisodesForPlanning;
+	public /*protected*/ int													numEpisodesForPlanning;
 	
 	/**
 	 * The maximum allowable change in the Q-function during an episode before the planning method terminates.
 	 */
-	protected double												maxQChangeForPlanningTermination;
+	public /*protected*/ double												maxQChangeForPlanningTermination;
 	
 	/**
 	 * The maximum Q-value change that occurred in the last learning episode.
 	 */
-	protected double												maxQChangeInLastEpisode = Double.POSITIVE_INFINITY;
+	public /*protected*/ double												maxQChangeInLastEpisode = Double.POSITIVE_INFINITY;
 
 	
 	
 	/**
 	 * Whether options should be decomposed into actions in the returned {@link Episode} objects.
 	 */
-	protected boolean												shouldDecomposeOptions = true;
+	public /*protected*/ boolean												shouldDecomposeOptions = true;
 
 	
 	
 	/**
 	 * The total number of learning steps performed by this agent.
 	 */
-	protected int													totalNumberOfSteps = 0;
+	public /*protected*/ int													totalNumberOfSteps = 0;
 	
 	
 	/**
@@ -205,7 +205,7 @@ public class QLearning extends MDPSolver implements QProvider, LearningAgent, Pl
 	 * @param learningPolicy the learning policy to follow during a learning episode.
 	 * @param maxEpisodeSize the maximum number of steps the agent will take in a learning episode for the agent stops trying.
 	 */
-	protected void QLInit(SADomain domain, double gamma, HashableStateFactory hashingFactory,
+	public /*protected*/ void QLInit(SADomain domain, double gamma, HashableStateFactory hashingFactory,
 						  QFunction qInitFunction, double learningRate, Policy learningPolicy, int maxEpisodeSize){
 		
 		this.solverInit(domain, gamma, hashingFactory);
@@ -322,7 +322,7 @@ public class QLearning extends MDPSolver implements QProvider, LearningAgent, Pl
 	 * @param s the hashed state for which to get the Q-values.
 	 * @return the possible Q-values for a given hashed stated.
 	 */
-	protected List<QValue> getQs(HashableState s) {
+	public /*protected*/ List<QValue> getQs(HashableState s) {
 		QLearningStateNode node = this.getStateNode(s);
 		return node.qEntry;
 	}
@@ -334,7 +334,7 @@ public class QLearning extends MDPSolver implements QProvider, LearningAgent, Pl
 	 * @param a the action
 	 * @return the Q-value for a given hashed state and action; null is returned if there is not Q-value currently stored.
 	 */
-	protected QValue getQ(HashableState s, Action a) {
+	public /*protected*/ QValue getQ(HashableState s, Action a) {
 		QLearningStateNode node = this.getStateNode(s);
 
 		for(QValue qv : node.qEntry){
@@ -358,7 +358,7 @@ public class QLearning extends MDPSolver implements QProvider, LearningAgent, Pl
 	 * @param s the hashed state for which to get the {@link QLearningStateNode} object
 	 * @return the {@link QLearningStateNode} object stored for the given hashed state. If no {@link QLearningStateNode} object.
 	 */
-	protected QLearningStateNode getStateNode(HashableState s){
+	public /*protected*/ QLearningStateNode getStateNode(HashableState s){
 		
 		QLearningStateNode node = qFunction.get(s);
 		
@@ -385,7 +385,7 @@ public class QLearning extends MDPSolver implements QProvider, LearningAgent, Pl
 	 * @param s the state for which to get he maximum Q-value;
 	 * @return the maximum Q-value in the hashed stated.
 	 */
-	protected double getMaxQ(HashableState s){
+	public /*protected*/ double getMaxQ(HashableState s){
 		List <QValue> qs = this.getQs(s);
 		double max = Double.NEGATIVE_INFINITY;
 		for(QValue q : qs){
