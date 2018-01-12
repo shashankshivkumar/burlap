@@ -101,9 +101,7 @@ public class MultipleIntentions {
     	int maxMLIRLSteps = 50;
     	MultipleIntentionsMLIRL MI = new MultipleIntentionsMLIRL(MIRequest, numEMSteps, learningRate, maxMLIRLLikelihoodChange, maxMLIRLSteps);
     	MI.performIRL();
-    	
-    	
-    	
+    	    	
     	// Test Learned Rewards
 		List<DifferentiableRF> rfs_learned = MI.getClusterRFs();		
 		List<GridWorldDomain> gwds_learned = new ArrayList<GridWorldDomain>();
@@ -133,7 +131,6 @@ public class MultipleIntentions {
 				goodEpisodesLearned.add(agents_learned.get(i).runLearningEpisode(envs_learned.get(i), 50));
 				envs_learned.get(i).resetEnvironment();
 			}
-	    	
     	}
     	
     	//visualize episodes from learned rewards

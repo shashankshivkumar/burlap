@@ -263,9 +263,6 @@ public class MLIRL {
 
 
 
-
-
-
 	/**
 	 * Computes and returns the gradient of the Boltzmann policy for the given state and action.
 	 * @param s the state in which the policy is queried

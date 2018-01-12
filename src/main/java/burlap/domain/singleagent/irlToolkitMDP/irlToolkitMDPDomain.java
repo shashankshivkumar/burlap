@@ -97,6 +97,14 @@ public class irlToolkitMDPDomain implements DomainGenerator {
 		return copy;
 	}
 	
+	public int getNumStates() {
+		return sa_s.length;
+	}
+	
+	public int getNumActions() {
+		return sa_s[0].length;
+	}
+	
 	@Override
 	public OOSADomain generateDomain() {
 		OOSADomain domain = new OOSADomain();
