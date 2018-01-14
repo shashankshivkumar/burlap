@@ -70,13 +70,13 @@ public class MyFirstTest {
     		env.resetEnvironment();
     	}
     	//visualize the completed learning episodes
-    	new EpisodeSequenceVisualizer(GridWorldVisualizer.getVisualizer(gwd.getMap()), domain, goodEpisodes);
+//    	new EpisodeSequenceVisualizer(GridWorldVisualizer.getVisualizer(gwd.getMap()), domain, goodEpisodes);
     	
     	LinearStateDifferentiableRF rf = new LinearStateDifferentiableRF(featureGen, 5);
     	SimpleHashableStateFactory hashingFactory = new SimpleHashableStateFactory();
     	MLIRLRequest request = new MLIRLRequest(domain, goodEpisodes, rf, hashingFactory);
     	
-    	MLIRL mlirl = new MLIRL(request, .03, .001, 50);
+    	MLIRL mlirl = new MLIRL(request, 0.01, .0001, 500);
     	    	
     	mlirl.performIRL();
     	

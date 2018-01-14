@@ -136,10 +136,17 @@ public class LinearStateDifferentiableRF implements DifferentiableRF {
 			features = fvGen.features(s);
 		}
 		double sum = 0.;
+//		System.out.println(String.valueOf(features.length));
+//		System.out.println(String.valueOf(this.parameters.length));
 		for(int i = 0; i < features.length; i++){
+//			System.out.println(String.valueOf(i));
 			sum += features[i] * this.parameters[i];
 		}
 		return sum;
+	}
+	
+	public int getNumFeatures() {
+		return parameters.length;
 	}
 
 	@Override

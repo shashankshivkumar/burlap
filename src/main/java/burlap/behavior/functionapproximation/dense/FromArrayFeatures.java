@@ -1,6 +1,5 @@
 package burlap.behavior.functionapproximation.dense;
 
-import burlap.domain.singleagent.irlToolkitMDP.irlToolkitMDPDomain;
 import burlap.domain.singleagent.irlToolkitMDP.state.irlToolkitMDPState;
 import burlap.mdp.core.oo.OODomain;
 import burlap.mdp.core.state.State;

@@ -108,10 +108,8 @@ public class irlToolkitMDPDomain implements DomainGenerator {
 	@Override
 	public OOSADomain generateDomain() {
 		OOSADomain domain = new OOSADomain();
-		domain.addStateClass("stateNumber", int.class).addStateClass("features", double.class);
-	
-		
-		
+		domain.addStateClass("stateNumber", int.class);//.addStateClass("features", double.class);
+			
 		irlToolkitMDPModel smodel = new irlToolkitMDPModel(getAdjacencyList(), getTransitionProbs());
 		RewardFunction rf = new VectorRF(getRewardVector());
 		TerminalFunction tf = new NullTermination();
