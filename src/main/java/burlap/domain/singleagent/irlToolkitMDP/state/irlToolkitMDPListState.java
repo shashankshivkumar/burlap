@@ -5,12 +5,11 @@ import java.util.Arrays;
 
 import burlap.mdp.core.state.State;
 
-public class irlToolkitMDPListState implements State {
-	public int stateNumber;
+public class irlToolkitMDPListState extends irlToolkitMDPState implements State {
 	public int mdpNumber;
 	
 	public irlToolkitMDPListState(int stateNumber, int mdpNumber) {
-		this.stateNumber = stateNumber;
+		super(stateNumber);
 		this.mdpNumber = mdpNumber;
 	}
 	

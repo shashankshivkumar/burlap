@@ -13,6 +13,7 @@ import burlap.debugtools.RandomFactory;
 import burlap.domain.singleagent.irlToolkitMDP.irlToolkitMDPDomainList;
 import burlap.domain.singleagent.irlToolkitMDP.state.irlToolkitMDPListState;
 import burlap.mdp.core.action.Action;
+import burlap.mdp.core.action.SimpleAction;
 import burlap.mdp.core.state.State;
 import burlap.mdp.singleagent.SADomain;
 import burlap.mdp.singleagent.model.FullModel;
@@ -82,7 +83,7 @@ public class DifferentiableParametricQLearning extends DifferentiableDP implemen
 	 * @param maxDelta when the maximum change in the value function is smaller than this value, VI will terminate.
 	 * @param maxIterations when the number of VI iterations exceeds this value, VI will terminate.
 	 */
-	public DifferentiableParametricQLearning(irlToolkitMDPDomainList mdps, SADomain domain, DifferentiableRF rf, double gamma, double boltzBeta, HashableStateFactory hashingFactory, int numTrajs, int trajLength, double learningRate){
+	public DifferentiableParametricQLearning(irlToolkitMDPDomainList mdps, SADomain domain, DifferentiableRF rf, DenseStateActionFeatures sa_features, double gamma, double boltzBeta, HashableStateFactory hashingFactory, int numTrajs, int trajLength, double learningRate){
 
 		this.DPPInit(domain, gamma, hashingFactory);
 
@@ -94,6 +95,7 @@ public class DifferentiableParametricQLearning extends DifferentiableDP implemen
 		this.learningRate = learningRate;
 		
 		this.mdps = mdps;
+		this.sa_features = sa_features;
 	}
 
 
@@ -163,6 +165,7 @@ public class DifferentiableParametricQLearning extends DifferentiableDP implemen
 //				    dV(s) <- dBoltzman(Q(s,a))
 		
 		/////////////////////////////////////////
+		this.initWeightsAndGradient();
 		
 		for(int n = 0; n < numTrajs; n++) {
 			int mdpNumber = rand.nextInt(mdps.getNumMDPs());
@@ -170,54 +173,43 @@ public class DifferentiableParametricQLearning extends DifferentiableDP implemen
 			State s = new irlToolkitMDPListState(stateNumber, mdpNumber);
 			for (int t = 0; t < trajLength; t++) {
 				Action a = new BoltzmannQPolicy(this, this.boltzBeta).action(s);
-				State sp = (State) domain.getModel().sample(s,a);
+				State sp = domain.getModel().sample(s,a).op;
 				this.updateWeights(s, a, sp);
 				this.updateWeightGradient(s, a, sp);
+				s = sp;
 			}
 			
 		}
-		
-//		if(!this.foundReachableStates){
-//			throw new RuntimeException("Cannot run VI until the reachable states have been found. Use the planFromState, performReachabilityFrom, addStateToStateSpace or addStatesToStateSpace methods at least once before calling runVI.");
-//		}
-//
-//		Set<HashableState> states = valueFunction.keySet();
-//
-//		int i;
-//		for(i = 0; i < this.maxIterations; i++){
-//
-//			double delta = 0.;
-//			for(HashableState sh : states){
-//
-//				double v = this.value(sh);
-//				double newV = this.performBellmanUpdateOn(sh);
-//				this.performDPValueGradientUpdateOn(sh);
-//				delta = Math.max(Math.abs(newV - v), delta);
-//
-//			}
-//
-//			if(delta < this.maxDelta){
-//				break; //approximated well enough; stop iterating
-//			}
-//
-//		}
-//
-//		DPrint.cl(this.debugCode, "Passes: " + i);
-//
-//		this.hasRunVI = true;
+		int i = 0;
 
+	}
+
+
+	private void initWeightsAndGradient() {
+		double[] f_sa = sa_features.features(new irlToolkitMDPListState(0,0), new SimpleAction("0"));
+		this.weights = new double[f_sa.length];
+		this.weightsGradient = new FunctionGradient.SparseGradient();
+		for(int i = 0; i < f_sa.length; i++) {
+			this.weights[i] = 0;
+			this.weightsGradient.put(i, 0);
+		}
 	}
 
 
 	private void updateWeights(State s, Action a, State sp) {
 		double[] f_sa = sa_features.features(s,a);
+		double q = this.computeQ(sp, a);
+		double v = this.getValue(sp);
+		double r = rf.reward(s, a, sp);
+		double correction = r + gamma * v - q;
 		for(int i = 0; i < f_sa.length; i++) {
-			weights[i] = weights[i] + this.getLearningRate() * (rf.reward(s, a, sp) + gamma * this.getValue(sp) - this.getQ(s,a)) * f_sa[i];
+			this.weights[i] = this.weights[i] + this.learningRate * correction * f_sa[i];
 		}
 		
 	}
 	
-	private double getQ(State s, Action a) {
+	@Override
+	protected double computeQ(State s, Action a) {
 		double[] f_sa = sa_features.features(s,a);
 		double q = 0;
 		for(int i = 0; i < f_sa.length; i++) {
@@ -231,7 +223,7 @@ public class DifferentiableParametricQLearning extends DifferentiableDP implemen
 		List<Action> as = this.applicableActions(s);
 		double[] qs = new double[as.size()];
 		for(int i = 0; i < as.size(); i++) {
-			qs[i] = this.getQ(s, as.get(i));
+			qs[i] = this.computeQ(s, as.get(i));
 		}
 		return operator.apply(qs);
 	}
@@ -255,7 +247,7 @@ public class DifferentiableParametricQLearning extends DifferentiableDP implemen
 				int idx = getLinearIndex(i, j, f_sa.length, f_s_length);
 				
 				
-				double dw = weightsGradient.getPartialDerivative(idx) + this.getLearningRate() * (rewardGradient.getPartialDerivative(j) + gamma * valueGradient.getPartialDerivative(j) - qGradient.getPartialDerivative(j)) * f_sa[i];
+				double dw = weightsGradient.getPartialDerivative(idx) + this.learningRate * (rewardGradient.getPartialDerivative(j) + gamma * valueGradient.getPartialDerivative(j) - qGradient.getPartialDerivative(j)) * f_sa[i];
 				this.weightsGradient.put(idx, dw);
 			}
 		}
@@ -278,7 +270,7 @@ public class DifferentiableParametricQLearning extends DifferentiableDP implemen
 		double[] qs = new double[as.size()];
 		FunctionGradient[] qGradients = new FunctionGradient[qs.length];
 		for(int i = 0; i < as.size(); i++) {
-			qs[i] = this.getQ(s, as.get(i));
+			qs[i] = this.computeQ(s, as.get(i));
 			qGradients[i] = this.getQGradient(s, as.get(i), stateFeatureIdx, stateFeatureLength);
 		}
 		

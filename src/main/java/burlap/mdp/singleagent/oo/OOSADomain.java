@@ -22,6 +22,8 @@ public class OOSADomain extends SADomain implements OODomain {
 
 	protected double[][] featureVector;
 	
+	protected int numStatesPerMdp = 0;
+	
 	@Override
 	public List<Class<?>> stateClasses() {
 		return new ArrayList<Class<?>>(stateClassesMap.values());
@@ -59,6 +61,12 @@ public class OOSADomain extends SADomain implements OODomain {
 		return this;
 	}
 	
+	public OOSADomain addFeatureVector(double[][] featureVector, int numStatesPerMdp) {
+		this.featureVector = featureVector.clone();
+		this.numStatesPerMdp = numStatesPerMdp;
+		return this;
+	}
+	
 	public double[][] getFeatures() {
 		double[][] copy = new double[featureVector.length][featureVector[0].length];
 		for(int i = 0; i < featureVector.length; i++) {
@@ -68,4 +76,10 @@ public class OOSADomain extends SADomain implements OODomain {
 		}
 		return copy;
 	}
+	
+	public int getNumStatesPerMdp() {
+		return numStatesPerMdp;
+	}
+
+	
 }

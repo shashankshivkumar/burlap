@@ -79,15 +79,15 @@ public class irlToolkitMDPDomain implements DomainGenerator {
 		return copy;
 	}
 	
-//	public double[][] getFeatures() {
-//		double[][] copy = new double[features.length][features[0].length];
-//		for(int i = 0; i < features.length; i++) {
-//			for(int j = 0; j < features[0].length; j++) {
-//				copy[i][j] = features[i][j];
-//			}
-//		}
-//		return copy;
-//	}
+	public double[][] getFeatures() {
+		double[][] copy = new double[features.length][features[0].length];
+		for(int i = 0; i < features.length; i++) {
+			for(int j = 0; j < features[0].length; j++) {
+				copy[i][j] = features[i][j];
+			}
+		}
+		return copy;
+	}
 	
 	public double[] getRewardVector() {
 		double[] copy = new double[rewardVector.length];
@@ -216,5 +216,9 @@ public class irlToolkitMDPDomain implements DomainGenerator {
     	}
     	
     	
+	}
+
+	public int getNumFeatures() {
+		return features[0].length;
 	}
 }
