@@ -263,7 +263,7 @@ public class MultipleIntentionsMLIRL {
 		//now pass through normalizing in log space, and then exponentiate to get back probability
 		//also maintain sum of entire matrix to normalize for new cluster priors
 		double matrixSum = 0.;
-		for(int j = 0; j < n; j++){
+		for(int j = 0; j < n * numTrajsPerTask; j++){
 			double columnDenom = this.computeClusterTrajectoryLoggedNormalization(j, newWeights);
 			for(int i = 0; i < k; i++){
 				double logProb = newWeights[i][j] - columnDenom;
@@ -276,7 +276,7 @@ public class MultipleIntentionsMLIRL {
 		//finally compute new cluster priors
 		for(int i = 0; i < k; i++){
 			double clusterSum = 0.;
-			for(int j = 0; j < n; j++){
+			for(int j = 0; j < n * numTrajsPerTask; j++){
 				clusterSum += newWeights[i][j];
 			}
 			double nPrior = clusterSum / matrixSum;
