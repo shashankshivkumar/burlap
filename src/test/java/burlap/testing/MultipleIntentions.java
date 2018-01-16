@@ -45,6 +45,8 @@ public class MultipleIntentions {
 		FactoredModel model_tmp;
 		List<GridLocation> gridlocs = new ArrayList<GridLocation>();
 		ArrayList<Episode> goodEpisodes = new ArrayList<Episode>();
+		int numTrajsPerTask = 20;
+		
 		for(int i = 0; i < numEnvs; i++)
 		{
 			gridlocs.add(new GridLocation(terminalStateX[i], terminalStateY[i], "loc" + String.valueOf(i)));
@@ -75,7 +77,7 @@ public class MultipleIntentions {
 	    		envs.get(i).resetEnvironment();
 	    	}
 			
-			for(int j = 0; j < 20; j++) {
+			for(int j = 0; j < numTrajsPerTask; j++) {
 				goodEpisodes.add(agents.get(i).runLearningEpisode(envs.get(i), 50));
 				envs.get(i).resetEnvironment();
 			}
@@ -99,7 +101,7 @@ public class MultipleIntentions {
     	double learningRate = 0.0003;
     	double maxMLIRLLikelihoodChange = 0.01;
     	int maxMLIRLSteps = 50;
-    	MultipleIntentionsMLIRL MI = new MultipleIntentionsMLIRL(MIRequest, numEMSteps, learningRate, maxMLIRLLikelihoodChange, maxMLIRLSteps);
+    	MultipleIntentionsMLIRL MI = new MultipleIntentionsMLIRL(MIRequest, numEMSteps, learningRate, maxMLIRLLikelihoodChange, maxMLIRLSteps, numTrajsPerTask);
     	MI.performIRL();
     	    	
     	// Test Learned Rewards

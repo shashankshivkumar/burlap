@@ -68,7 +68,8 @@ public class MultipleIntentionsMLIRL {
 	 * A random object used for initializing each cluster's RF parameters randomly.
 	 */
 	protected Random rand = RandomFactory.getMapped(0);
-
+	
+	protected int numTrajsPerTask;
 
 	/**
 	 * Initializes. Reward function parameters for each cluster will be initialized randomly between -1 and 1.
@@ -79,7 +80,7 @@ public class MultipleIntentionsMLIRL {
 	 * @param maxMLIRLSteps the maximum number of gradient ascent steps allowd by the underlying {@link burlap.behavior.singleagent.learnfromdemo.mlirl.MLIRLRequest} gradient ascent.
 	 */
 	public MultipleIntentionsMLIRL(MultipleIntentionsMLIRLRequest request,
-								   int emIterations, double mlIRLLearningRate, double maxMLIRLLikelihoodChange, int maxMLIRLSteps){
+								   int emIterations, double mlIRLLearningRate, double maxMLIRLLikelihoodChange, int maxMLIRLSteps, int numTrajsPerTask){
 
 		if(!request.isValid()){
 			throw new RuntimeException("Provided MultipleIntentionsMLIRLRequest object is not valid.");
@@ -90,7 +91,7 @@ public class MultipleIntentionsMLIRL {
 
 		this.numEMIterations = emIterations;
 		this.mlirlInstance = new MLIRL(request, mlIRLLearningRate, maxMLIRLLikelihoodChange, maxMLIRLSteps);
-
+		this.numTrajsPerTask = numTrajsPerTask;
 
 	}
 
@@ -234,9 +235,9 @@ public class MultipleIntentionsMLIRL {
 	protected double [][] computePerClusterMLIRLWeights(){
 
 		int k = this.clusterPriors.length;
-		int n = this.request.getExpertEpisodes().size();
+		int n = this.request.getExpertEpisodes().size() / this.numTrajsPerTask;
 
-		double [][] newWeights = new double[k][n];
+		double [][] newWeights = new double[k][n * numTrajsPerTask];
 
 		//first do pass computing log prior weighted likelihood of each trajectory
 		for(int i = 0; i < k; i++){
@@ -247,11 +248,15 @@ public class MultipleIntentionsMLIRL {
 
 			//compute the trajectory log-likelihoods and add them in
 			for(int j = 0; j < n; j++){
-				double trajectLogLikelihood = this.mlirlInstance.logLikelihoodOfTrajectory(
-						this.request.getExpertEpisodes().get(j), 1.);
-
-				double val = logPrior + trajectLogLikelihood;
-				newWeights[i][j] = val;
+				double val = logPrior;
+				for (int l = 0; l < numTrajsPerTask; l++) {
+					double trajectLogLikelihood = this.mlirlInstance.logLikelihoodOfTrajectory(
+							this.request.getExpertEpisodes().get(j*numTrajsPerTask + l), 1.);
+					val += trajectLogLikelihood;
+				}
+				for (int l = 0; l < numTrajsPerTask; l++) {
+					newWeights[i][j*numTrajsPerTask + l] = val;
+				}
 			}
 		}
 
