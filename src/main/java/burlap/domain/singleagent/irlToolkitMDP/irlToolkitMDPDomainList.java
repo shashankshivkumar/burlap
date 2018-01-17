@@ -6,6 +6,7 @@ import burlap.behavior.policy.BoltzmannQPolicy;
 import burlap.behavior.singleagent.Episode;
 import burlap.behavior.singleagent.learnfromdemo.mlirl.commonrfs.LinearStateDifferentiableRF;
 import burlap.behavior.singleagent.learnfromdemo.mlirl.differentiableplanners.DifferentiableParametricQLearning;
+import burlap.behavior.singleagent.learnfromdemo.mlirl.differentiableplanners.DifferentiableVI;
 import burlap.behavior.singleagent.learning.tdmethods.QLearning;
 import burlap.domain.singleagent.irlToolkitMDP.irlToolkitMDPDomain.irlToolkitMDPModel;
 import burlap.domain.singleagent.irlToolkitMDP.state.irlToolkitMDPListState;
@@ -107,7 +108,15 @@ public class irlToolkitMDPDomainList implements DomainGenerator{
 
 		@Override
 		public List<StateTransitionProb> stateTransitions(State s, Action a) {
-			return mdpModels.get(((irlToolkitMDPListState)s).mdpNumber).stateTransitions(s, a);
+			List<StateTransitionProb> mdp_transitions = mdpModels.get(((irlToolkitMDPListState)s).mdpNumber).stateTransitions(s, a);
+			List<StateTransitionProb> transitions = new ArrayList<StateTransitionProb>();
+
+			for (StateTransitionProb tp_tmp : mdp_transitions) {
+				irlToolkitMDPState ns = new irlToolkitMDPListState(((irlToolkitMDPState)tp_tmp.s).stateNumber, ((irlToolkitMDPListState)s).mdpNumber);
+				StateTransitionProb tp = new StateTransitionProb((State)ns, tp_tmp.p);
+				transitions.add(tp);
+			}
+			return transitions;
 		}
 		
 	}
@@ -130,26 +139,10 @@ public class irlToolkitMDPDomainList implements DomainGenerator{
 		OOSADomain domain = mdpList.generateDomain();
 		
 		FromArrayFeatures featureGen = new FromArrayFeatures(domain);
-		
-		
 		LinearStateDifferentiableRF rf = new LinearStateDifferentiableRF(featureGen, 2, false);
-    	rf.setParameter(0,10);
-    	rf.setParameter(1,0);
-    	
-    	FromArraySAFeatures sa_features = new FromArraySAFeatures(domain, 2);
 		
-		DifferentiableParametricQLearning agent = new DifferentiableParametricQLearning(mdpList, domain, rf, sa_features, 0.99, 0.5, new SimpleHashableStateFactory(), 10, 10, 0.1);
-    	
-		agent.runParametricQLearning();
+		DifferentiableVI planner = new DifferentiableVI(domain, rf, 0.99, 0.5, new SimpleHashableStateFactory(), 0.01, 500);
 		
-		BoltzmannQPolicy pi = new BoltzmannQPolicy(agent, 0.5);
-		
-		
-		State s = new irlToolkitMDPListState(0, 0);
-		for (int t = 0; t < 10; t++) {
-			Action a = pi.action(s);
-			System.out.println("State: " + ((irlToolkitMDPState)s).stateNumber + ", Action: " + a.actionName());
-			s = domain.getModel().sample(s,a).op;
-		}
+		planner.planFromState(new irlToolkitMDPListState(0, 0));
 	}
 }

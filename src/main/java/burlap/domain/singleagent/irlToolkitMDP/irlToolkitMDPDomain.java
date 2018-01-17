@@ -148,7 +148,7 @@ public class irlToolkitMDPDomain implements DomainGenerator {
 			double [] transitionProbs = sa_p[((irlToolkitMDPState)s).stateNumber][actionNumber(a.actionName())];
 			
 			for (int i = 0; i < adjacentStates.length; i++) {
-				irlToolkitMDPState ns = new irlToolkitMDPState(i);
+				irlToolkitMDPState ns = new irlToolkitMDPState(adjacentStates[i]);
 				double p = transitionProbs[i];
 				StateTransitionProb tp = new StateTransitionProb((State)ns, p);
 				transitions.add(tp);
