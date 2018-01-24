@@ -143,8 +143,14 @@ public class DifferentiableVI extends DifferentiableDP implements Planner {
 		for(i = 0; i < this.maxIterations; i++){
 
 			double delta = 0.;
-			for(HashableState sh : states){
-
+			Iterator<Map.Entry<HashableState, Double>> it = valueFunction.entrySet().iterator();
+//		    while (it.hasNext()) {
+//		        Map.Entry<HashableState, Double> pair = it.next();
+//		        HashableState sh = pair.getKey();
+//		        double v = pair.getValue();
+////		        System.out.println(pair.getKey() + " = " + pair.getValue());
+////		        it.remove(); // avoids a ConcurrentModificationException
+			for(HashableState sh : states) {
 				double v = this.value(sh);
 				double newV = this.performBellmanUpdateOn(sh);
 				this.performDPValueGradientUpdateOn(sh);

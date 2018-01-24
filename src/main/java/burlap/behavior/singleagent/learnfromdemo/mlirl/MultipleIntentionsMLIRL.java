@@ -50,7 +50,7 @@ public class MultipleIntentionsMLIRL {
 	 * The {@link burlap.behavior.singleagent.learnfromdemo.mlirl.MLIRL} instance used to perform the maximization step
 	 * for each clusters reward function parameter values.
 	 */
-	protected MLIRL mlirlInstance;
+	protected List<MLIRL> mlirlInstances;
 
 	/**
 	 * The number of EM iterations to run.
@@ -90,7 +90,10 @@ public class MultipleIntentionsMLIRL {
 		this.initializeClusters(this.request.getK(), this.request.getPlannerFactory());
 
 		this.numEMIterations = emIterations;
-		this.mlirlInstance = new MLIRL(request, mlIRLLearningRate, maxMLIRLLikelihoodChange, maxMLIRLSteps);
+		this.mlirlInstances = new ArrayList<MLIRL>();
+		for(int k = 0; k < this.request.getK(); k++) {
+			this.mlirlInstances.add(new MLIRL(this.clusterRequests.get(k), mlIRLLearningRate, maxMLIRLLikelihoodChange, maxMLIRLSteps));
+		}
 		this.numTrajsPerTask = numTrajsPerTask;
 
 	}
@@ -108,11 +111,21 @@ public class MultipleIntentionsMLIRL {
 			DPrint.cl(this.debugCode, "Starting EM iteration " + (i+1) + "/" + this.numEMIterations);
 
 			double [][] trajectoryPerClusterWeights = this.computePerClusterMLIRLWeights();
+			List<Thread>  t = new ArrayList<Thread>(); // This is the way to instantiate a 					 thread implementing runnable interface
 			for(int j = 0; j < k; j++){
-				MLIRLRequest clusterRequest = this.clusterRequests.get(j);
-				clusterRequest.setEpisodeWeights(trajectoryPerClusterWeights[j].clone());
-				this.mlirlInstance.setRequest(clusterRequest);
-				this.mlirlInstance.performIRL();
+				t.add(new Thread(new myThread(j,trajectoryPerClusterWeights[j])));
+				t.get(j).start();
+//				MLIRLRequest clusterRequest = this.clusterRequests.get(j);
+//				clusterRequest.setEpisodeWeights(trajectoryPerClusterWeights[j].clone());
+//				this.mlirlInstance.setRequest(clusterRequest);
+//				this.mlirlInstance.performIRL();
+			}
+			for(int j = 0; j < k; j++) {
+				 try {
+		            t.get(j).join();
+		        } catch (InterruptedException e) {
+		            e.printStackTrace();
+		        }
 			}
 
 
@@ -139,8 +152,8 @@ public class MultipleIntentionsMLIRL {
 			double logPrior = Math.log(this.clusterPriors[i]);
 
 			//set the IRL request for the current cluster
-			this.mlirlInstance.setRequest(this.clusterRequests.get(i));
-			double logTrajectory = this.mlirlInstance.logLikelihoodOfTrajectory(t, 1.);
+			this.mlirlInstances.get(i).setRequest(this.clusterRequests.get(i));
+			double logTrajectory = this.mlirlInstances.get(i).logLikelihoodOfTrajectory(t, 1.);
 			double v = logTrajectory + logPrior;
 			probs[i] = v;
 			mx = Math.max(mx, v);
@@ -203,7 +216,7 @@ public class MultipleIntentionsMLIRL {
 	 */
 	public void toggleDebugPrinting(boolean printDebug){
 		DPrint.toggleCode(this.debugCode, printDebug);
-		this.mlirlInstance.toggleDebugPrinting(printDebug);
+		this.mlirlInstances.get(0).toggleDebugPrinting(printDebug);
 	}
 
 
@@ -243,13 +256,13 @@ public class MultipleIntentionsMLIRL {
 			double logPrior = Math.log(this.clusterPriors[i]);
 
 			//set the IRL request for the current cluster
-			this.mlirlInstance.setRequest(this.clusterRequests.get(i));
+			this.mlirlInstances.get(i).setRequest(this.clusterRequests.get(i));
 
 			//compute the trajectory log-likelihoods and add them in
 			for(int j = 0; j < n; j++){
 				double val = logPrior;
 				for (int l = 0; l < numTrajsPerTask; l++) {
-					double trajectLogLikelihood = this.mlirlInstance.logLikelihoodOfTrajectory(
+					double trajectLogLikelihood = this.mlirlInstances.get(i).logLikelihoodOfTrajectory(
 							this.request.getExpertEpisodes().get(j*numTrajsPerTask + l), 1.);
 					val += trajectLogLikelihood;
 				}
@@ -398,6 +411,26 @@ public class MultipleIntentionsMLIRL {
 			double r = this.rand.nextDouble()*2 - 1.;
 			paramVec[i] = r;
 		}
+	}
+	
+	private class myThread implements Runnable {
+		protected int j;
+		double[] trajectoryPerClusterWeights;
+		
+		public myThread(int j, double[] trajectoryPerClusterWeights) {
+			this.j = j;
+			this.trajectoryPerClusterWeights = trajectoryPerClusterWeights;
+		}
+		@Override
+		public void run() {
+			// TODO Auto-generated method stub
+			System.out.println("Starting cluster " + j);
+			MLIRLRequest clusterRequest = clusterRequests.get(j);
+			clusterRequest.setEpisodeWeights(trajectoryPerClusterWeights.clone());
+			mlirlInstances.get(j).setRequest(clusterRequest);
+			mlirlInstances.get(j).performIRL();
+		}
+		
 	}
 
 

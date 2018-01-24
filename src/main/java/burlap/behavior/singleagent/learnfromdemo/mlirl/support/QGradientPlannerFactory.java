@@ -3,6 +3,7 @@ package burlap.behavior.singleagent.learnfromdemo.mlirl.support;
 import burlap.behavior.singleagent.learnfromdemo.mlirl.MLIRLRequest;
 import burlap.behavior.singleagent.learnfromdemo.mlirl.differentiableplanners.DifferentiableVI;
 import burlap.statehashing.HashableStateFactory;
+import burlap.statehashing.simple.SimpleHashableStateFactory;
 import burlap.mdp.auxiliary.common.NullTermination;
 import burlap.mdp.core.TerminalFunction;
 
@@ -80,8 +81,10 @@ public interface QGradientPlannerFactory {
 
 		@Override
 		public DifferentiableQFunction generateDifferentiablePlannerForRequest(MLIRLRequest request) {
+//			return new DifferentiableVI(request.getDomain(), request.getRf(), request.getGamma(),
+//					request.getBoltzmannBeta(), this.hashingFactory, this.maxDelta, this.maxIterations);
 			return new DifferentiableVI(request.getDomain(), request.getRf(), request.getGamma(),
-					request.getBoltzmannBeta(), this.hashingFactory, this.maxDelta, this.maxIterations);
+					request.getBoltzmannBeta(), new SimpleHashableStateFactory(), this.maxDelta, this.maxIterations);
 		}
 	}
 
